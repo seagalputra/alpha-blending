@@ -2,29 +2,31 @@ clear;
 clc;
 close all;
 
-% img_background = imresize(imread('park.jpg'), [900 900]);
-img_background = imread('park.jpg');
-img_foreground = imread('cat.png');
+img_background = imread('pic/brown_cat.jpg');
+[foreground, map, alpha] = imread('pic/cat.png');
+img_foreground = imresize(foreground, [600 600]);
 
-new_img = alphablend(img_background, img_foreground, 0.5, [0,0]);
+% maintain alpha value in between 0 and 1
+alpha = imresize(alpha, [600, 600]);
+alpha = double(alpha/255.0);
 
-imshow(new_img);
+% Separate each color channel of the background
+red_background = double(img_background(:,:,1));
+green_background = double(img_background(:,:,2));
+blue_background = double(img_background(:,:,3));
 
-function b = alphablend(background, foreground, opacity, position)
-    [back_height, back_width, back_plane] = size(background);
-    [fore_height, fore_width, fore_plane] = size(foreground);
-    x = position(1);
-    y = position(2);
-    
-    for i = 1:fore_height
-        for j = 1:fore_width
-            if (x + i >= back_height || y + j >= back_width)
-                continue
-            end
-            b(i,j) = (opacity * foreground(i,j)) + (1 - opacity) * background(i,j);
-        end
-    end
-    
-    % b = (opacity * tmp_foreground) + (1 - opacity) * tmp_background;
-    % b = [back_height, back_width, fore_height, fore_width];
-end
+% Separate each color channel of the foreground
+red_foreground = double(img_foreground(:,:,1));
+green_foreground = double(img_foreground(:,:,2));
+blue_foreground = double(img_foreground(:,:,3));
+
+red_new_img = alpha.*red_foreground + (1.0 - alpha).*red_background;
+green_new_img = alpha.*green_foreground + (1.0 - alpha).*green_background;
+blue_new_img = alpha.*blue_foreground + (1.0 - alpha).*blue_background;
+
+new_img = cat(3, red_new_img, green_new_img, blue_new_img);
+new_img = uint8(new_img);
+
+subplot(1,3,1); imshow(img_background); title('Background');
+subplot(1,3,2); imshow(img_foreground); title('Foreground');
+subplot(1,3,3); imshow(new_img); title('New Image');
